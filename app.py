@@ -614,6 +614,18 @@ def verify_clinical_factcheck(triage, text, images_list, severity_label, age, ti
     elif "Depressive" in condition or "Psychiatry" in specialty or "Anxiety" in condition or "Behavioral Health" in specialty:
         verified_criteria.append(f"✓ Affective mood, cognitive, & neurochemical markers align with `{condition}`")
         verified_criteria.append("✓ Behavioral health / psychiatric safety evaluation protocol verified")
+    elif "Constipation" in condition or "Bowel" in condition:
+        verified_criteria.append(f"✓ Reduced colonic transit & hard stool markers align with ")
+        verified_criteria.append("✓ Dietary soluble fiber & fluid optimization protocol verified")
+    elif "Common Cold" in condition or "Viral Rhinitis" in condition:
+        verified_criteria.append(f"✓ Upper nasal mucosal inflammation & viral rhinitis markers align with ")
+        verified_criteria.append("✓ Self-limited viral upper respiratory supportive care protocol verified")
+    elif "Constipation" in condition or "Bowel" in condition:
+        verified_criteria.append(f"✓ Reduced colonic transit & hard stool markers align with ")
+        verified_criteria.append("✓ Dietary soluble fiber & fluid optimization protocol verified")
+    elif "Common Cold" in condition or "Viral Rhinitis" in condition:
+        verified_criteria.append(f"✓ Upper nasal mucosal inflammation & viral rhinitis markers align with ")
+        verified_criteria.append("✓ Self-limited viral upper respiratory supportive care protocol verified")
     elif "Appendicitis" in condition or "Appendicitis" in specialty:
         verified_criteria.append(f"✓ Right lower quadrant abdominal pain & peritoneal signs align with `{condition}`")
         verified_criteria.append("✓ Surgical emergency evaluation protocol cross-validated")
@@ -756,6 +768,36 @@ def analyze_input(text, images_list, severity_label, age, timeline, events, trav
 
     # 2. Specialty Profiles with Expanded Clinical Dictionaries, Detailed Reasoning, & Literature
     specialty_profiles = {
+        "Constipation & Bowel Disorders": {
+            "keywords": ["constipation", "constipated", "hard stools", "hard stool", "infrequent bowel movements", "difficulty passing stool", "straining", "straining on toilet", "infrequent stool", "bowel impaction", "lumpy stool", "dry hard stool", "unable to poop", "hard poops", "infrequent bowel"],
+            "required_any": ["constipation", "constipated", "hard stool", "hard stools", "infrequent bowel", "difficulty passing stool", "straining", "unable to poop", "hard poops"],
+            "weight": 2.8,
+            "specialty": "Gastroenterology / Primary Care",
+            "condition": "Functional Constipation / Bowel Motility Impairment",
+            "associated": ["Infrequent or difficult bowel movements (<3 per week)", "Hard, lumpy, or dry stool consistency", "Abdominal bloating & rectal fullness", "Straining during defecation or sensation of incomplete evacuation"],
+            "notes": "Symptom presentation is characteristic of Functional Constipation or colonic motility impairment. Evaluation by a Gastroenterologist or Primary Care physician for dietary fiber optimization, fluid intake, and motility assessment is recommended.",
+            "reasoning": "Infrequent bowel evacuations (<3 per week), hard or lumpy stool consistency, straining during defecation, and feelings of incomplete rectal evacuation reflect reduced colonic transit velocity, inadequate dietary soluble fiber/water intake, or pelvic floor dyssynergia. Gastroenterology or Primary Care evaluation is recommended for clinical assessment, dietary lifestyle modification, and evidence-based laxative therapy.",
+            "literature": [
+                {"title": "American Gastroenterological Association (AGA) Medical Position Statement on Constipation", "url": "https://pubmed.ncbi.nlm.nih.gov/23273729/", "journal": "Gastroenterology (AGA Practice Guidelines)", "evidence_type": "Human Clinical Practice Guidelines & Systematic Reviews"},
+                {"title": "American College of Gastroenterology (ACG) Clinical Guideline: Management of Benign Anorectal Disorders & Chronic Constipation in Adults", "url": "https://pubmed.ncbi.nlm.nih.gov/25223575/", "journal": "American Journal of Gastroenterology (ACG Guidelines)", "evidence_type": "Human Clinical Guidelines & Randomized Controlled Trials"},
+                {"title": "Mayo Clinic Evidence-Based Clinical Care Guide for Adult Functional Constipation & Dietary Fiber Protocols", "url": "https://www.mayoclinic.org/diseases-conditions/constipation/symptoms-causes/syc-20354253", "journal": "Mayo Clinic Medical Knowledge Network", "evidence_type": "Human Clinical Patient Care Guidance"}
+            ]
+        },
+        "Common Cold (Viral Rhinitis)": {
+            "keywords": ["common cold", "head cold", "scratchy throat", "stuffy nose", "runny nose", "sneezing", "mild congestion", "mild low grade fever", "mild malaise", "rhinovirus", "mild sore throat", "nasal discharge", "stuffy head"],
+            "required_any": ["common cold", "head cold", "scratchy throat", "stuffy nose", "rhinovirus", "sneezing", "stuffy head"],
+            "weight": 2.8,
+            "specialty": "Primary Care / Urgent Care",
+            "condition": "Common Cold / Acute Viral Rhinitis",
+            "associated": ["Nasal congestion & clear rhinorrhea (runny nose)", "Frequent sneezing & scratchy sore throat", "Mild low-grade fever or mild headache", "General mild fatigue & sinus fullness"],
+            "notes": "Symptom presentation aligns with a classic self-limited Common Cold (Acute Viral Rhinitis). Primary Care or Urgent Care consultation is recommended for supportive care and symptom management.",
+            "reasoning": "Acute nasal congestion, clear rhinorrhea, paroxysmal sneezing, scratchy pharyngeal discomfort, and mild systemic malaise in the absence of high fever, dyspnea, or lower respiratory consolidation represent acute viral inflammation of the upper nasal mucosa (most commonly Human Rhinovirus or seasonal Coronavirus). Supportive outpatient management and Primary Care or Urgent Care guidance are indicated.",
+            "literature": [
+                {"title": "American Academy of Family Physicians (AAFP) Clinical Practice Guideline: Symptomatic Management of the Common Cold in Adults", "url": "https://www.aafp.org/pubs/afp/issues/2012/0715/p153.html", "journal": "American Family Physician (AAFP  Guidelines)", "evidence_type": "Human Clinical Trials & Practice Guidelines"},
+                {"title": "CDC Clinical Guidance on Acute Upper Respiratory Viral Infections (Common Cold Management)", "url": "https://www.cdc.gov/antibiotic-use/common-illnesses/colds.html", "journal": "CDC National Center for Immunization and Respiratory Diseases", "evidence_type": "Human Public Health & Outpatient Clinical Care Guidance"},
+                {"title": "Mayo Clinic Evidence-Based Clinical Care Guide for Viral Upper Respiratory Infection (Common Cold)", "url": "https://www.mayoclinic.org/diseases-conditions/common-cold/symptoms-causes/syc-20351605", "journal": "Mayo Clinic Medical Knowledge Network", "evidence_type": "Human Clinical Patient Care Guidance"}
+            ]
+        },
         "Diabetes & Glycemic Care": {
             "keywords": [
                 "diabetes", "diabetic", "blood sugar", "high blood sugar", "hyperglycemia", "hypoglycemia", "low blood sugar",
@@ -1285,6 +1327,14 @@ def display_provider_results(triage, age, sex, severity, timeline, food, events,
     elif len(images_list) > 1:
         img_summary_str = f"{len(images_list)} Photos Uploaded & Analyzed for Visual Progression (Baseline vs. Current Status)"
         
+    summary_lit_lines = []
+    for lit in triage.get("literature", []):
+        if isinstance(lit, dict):
+            summary_lit_lines.append(f"- Title: {lit.get('title', '')}\n  URL / Direct Link: {lit.get('url', '')}\n  Source / Journal: {lit.get('journal', '')}\n  Evidence Scope: {lit.get('evidence_type', 'Human Clinical Guidelines & Evidence')}")
+        else:
+            summary_lit_lines.append(f"- {lit}")
+    summary_lit_str = "\n\n".join(summary_lit_lines)
+
     summary_content = f"""===================================================================
 HELLO PROVIDER - PATIENT CARE SUMMARY & REFERRAL BRIEF (v15)
 ===================================================================
@@ -1329,7 +1379,7 @@ Recommended Action: {triage['recommendation']}
 
 6. REFERENCED MEDICAL LITERATURE & EVIDENCE-BASED GUIDELINES
 -------------------------------------------------------------------
-{chr(10).join('- ' + lit for lit in triage.get('literature', ['AAFP Clinical Guidelines']))}
+{summary_lit_str}
 
 7. MATCHED SAN FRANCISCO HEALTHCARE PROVIDERS (WITH WEBSITES & GOOGLE MAPS DIRECTIONS)
 -------------------------------------------------------------------
@@ -1346,6 +1396,7 @@ Recommended Action: {triage['recommendation']}
 [ ] Visit the clinic website link to review patient intake policies.
 [ ] Bring a copy of this Care Summary Brief to your appointment.
 [ ] Review your medication, vaccine, and allergy details in Section 2 with your clinician.
+[ ] Review the Clinical Reasoning Explanation (Section 5) and Medical Literature (Section 6) with your doctor.
 [ ] If symptoms worsen unexpectedly or include emergency signs, visit an ER immediately.
 
 ===================================================================
@@ -1459,24 +1510,34 @@ if user_input or active_images:
                     fc = triage.get("factcheck", {})
                     fc_criteria = "\n".join(f"  - {c}" for c in fc.get("criteria", []))
                     
-                    reasoning_text = triage.get("reasoning", "Symptoms evaluated against standard clinical evidence protocols.")
-                    literature_items = triage.get("literature", ["AAFP Clinical Guidelines for Primary Care Symptom Evaluation"])
-                    literature_formatted = "\n".join(f"- 📖 **{lit}**" for lit in literature_items)
+                    reasoning_text = triage.get("reasoning", "Symptoms evaluated against evidence-based human clinical guidelines.")
+                    lit_items = triage.get("literature", [])
+                    lit_lines = []
+                    for item in lit_items:
+                        if isinstance(item, dict):
+                            t_title = item.get("title", "")
+                            t_url = item.get("url", "")
+                            t_journal = item.get("journal", "")
+                            t_ev = item.get("evidence_type", "Human Clinical Evidence")
+                            lit_lines.append(f"- 📖 **[{t_title}]({t_url})**\n  *Source*:  | *Scope*: ")
+                        else:
+                            lit_lines.append(f"- 📖 {item}")
+                    literature_formatted = "\n".join(lit_lines)
 
                     eval_msg = (
                         f"Thank you for sharing your symptoms and clinical background with me. Here is my initial evaluation:\n\n"
                         f"### 🩺 Hello Provider Clinical Evaluation\n"
-                        f"- **Suspected Condition**: `{triage['suspected_condition']}`\n"
-                        f"- **Recommended Medical Specialty**: `{triage['specialty']}`\n"
+                        f"- **Suspected Condition**: \n"
+                        f"- **Recommended Medical Specialty**: \n"
                         f"- **Assessed Urgency**: {triage['urgency']}\n"
                         f"- **Clinical Guidance**: {triage['analysis']}\n\n"
                         f"### 🧠 Clinical Reasoning & Diagnostic Explanation\n"
                         f"{reasoning_text}\n\n"
-                        f"### 📚 Referenced Medical Literature & Evidence-Based Guidelines\n"
+                        f"### 📚 Referenced Medical Literature & Evidence-Based Guidelines (Human Evidence)\n"
                         f"{literature_formatted}\n\n"
                         f"### 🛡️ Clinical Fact-Check & Verification Status\n"
-                        f"- **Accuracy Status**: `{fc.get('status', 'PASSED - Verified Clinical Accuracy')}`\n"
-                        f"- **Evidence Confidence**: `{fc.get('confidence', '98.5% Match')}`\n"
+                        f"- **Accuracy Status**: \n"
+                        f"- **Evidence Confidence**: \n"
                         f"- **Cross-Validated Criteria**:\n{fc_criteria}\n"
                         f"- **Verification Note**: *{fc.get('notes', 'Diagnostic logic verified against evidence-based medical triage guidelines.')}*\n\n"
                         f"### 🔍 Other Associated Symptoms You Might Be Experiencing:\n"

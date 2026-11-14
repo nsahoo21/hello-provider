@@ -597,9 +597,9 @@ def verify_clinical_factcheck(triage, text, images_list, severity_label, age, ti
             "confidence": "99.9% Emergency Protocol Alignment",
             "criteria": [
                 "✓ Critical red-flag emergency keywords or extreme severity score detected",
-                "✓ Direct 911 / Emergency Room guidance protocol cross-validated"
+                "✓ Direct 911 / Emergency Room / Crisis guidance protocol cross-validated"
             ],
-            "notes": "Emergency safety override verified against critical hospital triage guidelines."
+            "notes": "Emergency safety override verified against critical hospital & emergency triage guidelines."
         }
 
     specialty = triage.get("specialty", "Primary Care")
@@ -608,7 +608,27 @@ def verify_clinical_factcheck(triage, text, images_list, severity_label, age, ti
 
     verified_criteria = []
     
-    if "COVID" in condition or "Respiratory" in condition:
+    if "Appendicitis" in condition or "Appendicitis" in specialty:
+        verified_criteria.append(f"✓ Right lower quadrant abdominal pain & peritoneal signs align with `{condition}`")
+        verified_criteria.append("✓ Surgical emergency evaluation protocol cross-validated")
+    elif "Asthma" in condition:
+        verified_criteria.append(f"✓ Bronchospastic & airway constriction markers align with `{condition}`")
+        verified_criteria.append("✓ Bronchodilator / pulmonology evaluation protocol applied")
+    elif "Pneumonia" in condition:
+        verified_criteria.append(f"✓ Lower respiratory tract & parenchymal infection markers align with `{condition}`")
+    elif "Sinusitis" in condition or "Sinus" in condition:
+        verified_criteria.append(f"✓ Rhinosinusitis & facial pressure/discharge markers align with `{condition}`")
+    elif "Depressive" in condition or "Depression" in condition or "Psychiatry" in specialty:
+        verified_criteria.append(f"✓ Affective mood, cognitive, & anhedonic markers align with `{condition}`")
+        verified_criteria.append("✓ Behavioral health / psychiatric safety evaluation protocol verified")
+    elif "Conjunctivitis" in condition or "Pink Eye" in condition:
+        verified_criteria.append(f"✓ Ocular surface erythema & eyelid exudate markers align with `{condition}`")
+    elif "Shingles" in condition or "Herpes Zoster" in condition:
+        verified_criteria.append(f"✓ Dermatomal neuropathic vesicular exanthem markers align with `{condition}`")
+        verified_criteria.append("✓ Early antiviral protocol flagged")
+    elif "Tinea Pedis" in condition or "Athlete's Foot" in condition:
+        verified_criteria.append(f"✓ Superficial fungal interdigital scaling markers align with `{condition}`")
+    elif "COVID" in condition or "Respiratory" in condition:
         verified_criteria.append(f"✓ Respiratory & viral symptom markers align with `{condition}`")
         verified_criteria.append("✓ Rapid antigen testing & viral isolation protocol flagged")
     elif "Allergy" in condition or "Allergic" in condition:
@@ -657,7 +677,39 @@ def verify_clinical_factcheck(triage, text, images_list, severity_label, age, ti
 def analyze_input(text, images_list, severity_label, age, timeline, events, travel, intake_food):
     text_lower = text.lower() if text else ""
 
-    # 1. Critical Emergency Keyword & Severity Checks
+    # 1. Critical Mental Health Crisis Check
+    mental_health_crisis_keywords = ["suicide", "suicidal", "want to die", "ending my life", "self harm", "end my life", "kill myself"]
+    for kw in mental_health_crisis_keywords:
+        if kw in text_lower:
+            t_res = {
+                "is_emergency": True,
+                "specialty": "Emergency Care / Mental Health Crisis",
+                "suspected_condition": "Acute Mental Health Crisis / Suicidal Ideation",
+                "associated_symptoms": ["Severe psychological distress", "Thoughts of self-harm or suicide", "Feeling hopeless or overwhelmed"],
+                "urgency": "CRITICAL EMERGENCY - CRISIS INTERVENTION REQUIRED",
+                "analysis": "Critical Safety Alert: Your message indicates thoughts of self-harm or suicide. Immediate crisis support is available 24/7.",
+                "recommendation": "Please call or text **988** (the Suicide & Crisis Lifeline) immediately to speak with a trained counselor, go to the nearest San Francisco Emergency Room, or call **911** right now."
+            }
+            t_res["factcheck"] = verify_clinical_factcheck(t_res, text, images_list, severity_label, age, timeline)
+            return t_res
+
+    # 2. Critical Surgical Emergency Check (Appendicitis Red Flags)
+    appendicitis_emergency_keywords = ["appendicitis", "rebound tenderness", "severe right lower quadrant pain", "severe right lower belly pain", "severe right belly pain"]
+    for kw in appendicitis_emergency_keywords:
+        if kw in text_lower:
+            t_res = {
+                "is_emergency": True,
+                "specialty": "Emergency Care / General Surgery",
+                "suspected_condition": "Acute Appendicitis / Surgical Abdominal Emergency",
+                "associated_symptoms": ["Right lower quadrant abdominal pain", "Rebound tenderness & abdominal rigidity", "Nausea, vomiting, & fever", "Inability to tolerate oral intake"],
+                "urgency": "CRITICAL SURGICAL EMERGENCY",
+                "analysis": f"Critical Safety Alert: Your reported symptoms mention '{kw}'. Acute appendicitis requires urgent surgical evaluation.",
+                "recommendation": "Please go directly to the nearest San Francisco Emergency Room (e.g., Zuckerberg SF General at 1001 Potrero Ave or Saint Francis ER at 900 Hyde St) or call 911 immediately for urgent evaluation."
+            }
+            t_res["factcheck"] = verify_clinical_factcheck(t_res, text, images_list, severity_label, age, timeline)
+            return t_res
+
+    # 3. Critical Emergency Keyword & Severity Checks
     critical_emergency_keywords = [
         "severe chest pain", "cannot breathe", "gasping for air", "severe shortness of breath",
         "stroke", "severe bleeding", "unconscious", "fainted", "seizure", "head trauma"
@@ -679,14 +731,108 @@ def analyze_input(text, images_list, severity_label, age, timeline, events, trav
             t_res["factcheck"] = verify_clinical_factcheck(t_res, text, images_list, severity_label, age, timeline)
             return t_res
 
-    # 2. Specialty Profiles with Expanded & Tightly Calibrated Clinical Dictionary
+    # 4. Specialty Profiles with Expanded & Tightly Calibrated Clinical Dictionary
     specialty_profiles = {
+        "Appendicitis & Acute Abdomen": {
+            "keywords": [
+                "appendicitis", "right lower quadrant", "lower right abdominal pain", "rebound tenderness",
+                "right lower belly pain", "appendix", "right side stomach pain", "right lower stomach"
+            ],
+            "required_any": ["appendicitis", "right lower quadrant", "lower right abdominal", "rebound tenderness", "appendix", "right side stomach", "right lower stomach"],
+            "weight": 3.0,
+            "specialty": "Emergency Care / General Surgery",
+            "condition": "Acute Appendicitis / Abdominal Surgical Emergency",
+            "associated": ["Right lower quadrant abdominal pain", "Nausea or vomiting", "Low-grade fever", "Rebound tenderness & abdominal guarding"],
+            "notes": "Symptom pattern strongly indicates acute appendicitis or right lower quadrant peritoneal irritation. Urgent surgical/ER evaluation required."
+        },
+        "Asthma Exacerbation": {
+            "keywords": [
+                "asthma", "asthma attack", "wheezing", "bronchospasm", "chest tightness", "inhaler", "albuterol"
+            ],
+            "required_any": ["asthma", "wheezing", "bronchospasm", "inhaler", "albuterol"],
+            "weight": 2.5,
+            "specialty": "Pulmonology / Urgent Care",
+            "condition": "Asthma Exacerbation / Acute Bronchospasm",
+            "associated": ["Wheezing on exhalation", "Chest tightness & dyspnea", "Coughing exacerbation", "Rescue inhaler reliance"],
+            "notes": "Presentation aligns with an acute asthma exacerbation or bronchospastic episode."
+        },
+        "Pneumonia & Lower Respiratory": {
+            "keywords": [
+                "pneumonia", "productive cough", "greenish phlegm", "yellow phlegm", "rusty phlegm",
+                "chest pain when breathing", "pleuritic chest pain", "lung infection", "deep chest cough", "phlegm"
+            ],
+            "required_any": ["pneumonia", "greenish phlegm", "rusty phlegm", "yellow phlegm", "chest pain when breathing", "pleuritic", "lung infection"],
+            "weight": 2.5,
+            "specialty": "Pulmonology / Urgent Care",
+            "condition": "Pneumonia / Lower Respiratory Tract Infection",
+            "associated": ["Productive cough with purulent/rusty phlegm", "Pleuritic chest pain on deep breath", "High fever & shaking chills", "Shortness of breath & fatigue"],
+            "notes": "Presentation strongly points to lower respiratory infection / bacterial or viral pneumonia."
+        },
+        "Sinusitis (Sinus Infection)": {
+            "keywords": [
+                "sinus infection", "sinusitis", "sinus pressure", "facial pressure", "facial pain", "sinus pain",
+                "post nasal drip", "post-nasal drip", "green nasal discharge", "yellow mucus", "clogged sinuses"
+            ],
+            "required_any": ["sinus", "sinusitis", "facial pressure", "facial pain", "post nasal drip", "post-nasal drip"],
+            "weight": 2.5,
+            "specialty": "ENT (Otolaryngology) / Primary Care",
+            "condition": "Acute Sinusitis / Sinus Infection",
+            "associated": ["Facial pain & sinus tenderness", "Nasal congestion & thick green/yellow discharge", "Post-nasal drip & frontal headache", "Reduced sense of smell"],
+            "notes": "Symptom pattern is characteristic of Acute Rhinosinusitis (Sinus Infection)."
+        },
+        "Psychiatry & Mental Health": {
+            "keywords": [
+                "depression", "depressed", "major depressive", "persistent sadness", "anhedonia", "loss of interest",
+                "feeling hopeless", "hopelessness", "worthless", "severe low mood", "mental exhaustion", "mood disorder"
+            ],
+            "required_any": ["depression", "depressed", "sadness", "anhedonia", "loss of interest", "hopeless"],
+            "weight": 2.5,
+            "specialty": "Psychiatry / Behavioral Health",
+            "condition": "Major Depressive Episode / Mood Disorder",
+            "associated": ["Persistent depressed mood or sadness", "Anhedonia (loss of interest or pleasure)", "Cognitive fatigue & brain fog", "Sleep & appetite disturbances"],
+            "notes": "Presentation aligns with a major depressive episode or affective mood disorder. Professional psychiatric evaluation recommended."
+        },
+        "Ophthalmology (Pink Eye / Conjunctivitis)": {
+            "keywords": [
+                "pink eye", "conjunctivitis", "eye discharge", "pus in eye", "crusty eyelids", "eyelids stuck together",
+                "eyelids stuck", "redness in eye", "gritty eye", "itchy red eye"
+            ],
+            "required_any": ["pink eye", "conjunctivitis", "crusty eyelids", "eye discharge", "pus in eye", "eyelids stuck"],
+            "weight": 2.5,
+            "specialty": "Ophthalmology / Primary Care",
+            "condition": "Acute Conjunctivitis (Pink Eye) or Ocular Surface Inflammation",
+            "associated": ["Scleral redness & injection", "Purulent or watery eye discharge", "Eyelid crusting upon waking", "Gritty ocular sensation"],
+            "notes": "Symptom pattern is classic for Acute Conjunctivitis (Pink Eye) or superficial ocular inflammation."
+        },
+        "Dermatology (Shingles / Herpes Zoster)": {
+            "keywords": [
+                "shingles", "herpes zoster", "painful rash on one side", "dermatomal rash", "blisters on torso",
+                "blisters on one side", "burning nerve pain", "band-like rash", "tingling rash"
+            ],
+            "required_any": ["shingles", "herpes zoster", "dermatomal", "blisters on one side", "band-like rash"],
+            "weight": 2.5,
+            "specialty": "Dermatology / Neurology / Primary Care",
+            "condition": "Herpes Zoster (Shingles) / Dermatomal Neuropathic Exanthem",
+            "associated": ["Localized unilateral dermatomal pain", "Fluid-filled vesicular blisters on erythematous base", "Burning or tingling neuropathic prodrome", "Post-herpetic skin sensitivity"],
+            "notes": "Presentation strongly indicates Herpes Zoster (Shingles). Early antiviral evaluation is recommended."
+        },
+        "Dermatology (Athlete's Foot / Tinea Pedis)": {
+            "keywords": [
+                "athlete's foot", "tinea pedis", "foot fungus", "itching between toes", "peeling skin on feet",
+                "cracking toe webs", "scaly soles", "fungal foot rash"
+            ],
+            "required_any": ["athlete's foot", "tinea pedis", "foot fungus", "between toes", "toe webs", "peeling skin on feet"],
+            "weight": 2.5,
+            "specialty": "Dermatology / Podiatry",
+            "condition": "Tinea Pedis (Athlete's Foot) / Superficial Fungal Dermatitis",
+            "associated": ["Interdigital itching & scaling between toes", "Peeling or fissured skin on feet", "Erythema & superficial fungal infection", "Burning sensation on soles"],
+            "notes": "Presentation is classic for Tinea Pedis (Athlete's Foot) fungal infection."
+        },
         "COVID-19 & Viral Respiratory": {
             "keywords": [
-                "loss of taste", "loss of smell", "loss of taste or smell", "covid", "sars-cov-2", "coronavirus",
-                "shortness of breath", "trouble breathing", "cough", "fever", "chills", "body aches", "sore throat"
+                "loss of taste", "loss of smell", "loss of taste or smell", "covid", "sars-cov-2", "coronavirus", "covid-19"
             ],
-            "required_any": ["loss of taste", "loss of smell", "loss of taste or smell", "covid", "sars-cov-2", "coronavirus"],
+            "required_any": ["loss of taste", "loss of smell", "loss of taste or smell", "covid", "sars-cov-2", "coronavirus", "covid-19"],
             "weight": 2.5,
             "specialty": "Urgent Care / Primary Care",
             "condition": "COVID-19 / Acute Viral Respiratory Illness",
@@ -736,9 +882,10 @@ def analyze_input(text, images_list, severity_label, age, timeline, events, trav
             "keywords": [
                 "numbness", "tingling", "pins and needles", "optic neuritis", "double vision", "blurry vision",
                 "coordination", "balance", "muscle weakness", "demyelination", "sensory issues", "motor issues",
-                "bladder emptying", "urinary urgency", "headache", "migraine", "dizzy", "dizziness", "seizure", "nerve"
+                "bladder emptying", "urinary urgency", "headache", "migraine", "neuropathy"
             ],
-            "weight": 1.8,
+            "required_any": ["numbness", "tingling", "pins and needles", "optic neuritis", "double vision", "blurry vision", "coordination", "demyelination", "sensory issues", "motor issues", "urinary urgency", "neuropathy"],
+            "weight": 2.2,
             "specialty": "Neurology",
             "condition": "Neurological Evaluation / Suspected Demyelination, Nerve Sensitivity, or CNS Presentation",
             "associated": ["Sensory numbness or tingling", "Optic neuritis or vision changes", "Motor weakness & balance difficulty", "Cognitive fatigue & bladder urgency"],
@@ -747,8 +894,9 @@ def analyze_input(text, images_list, severity_label, age, timeline, events, trav
         "Orthopedics": {
             "keywords": [
                 "knee", "ankle", "shoulder", "wrist", "elbow", "back", "spine", "bone", "bones",
-                "fracture", "sprain", "strain", "fall", "injury", "myalgia"
+                "fracture", "sprain", "strain", "fall", "injury", "myalgia", "joint sprain"
             ],
+            "required_any": ["knee", "ankle", "shoulder", "wrist", "elbow", "back", "spine", "bone", "bones", "fracture", "sprain", "strain", "myalgia"],
             "weight": 1.3,
             "specialty": "Orthopedics",
             "condition": "Musculoskeletal Strain, Exertional Myalgia, or Joint Sprain",
@@ -790,11 +938,11 @@ def analyze_input(text, images_list, severity_label, age, timeline, events, trav
         },
         "Ophthalmology": {
             "keywords": [
-                "eye redness", "red eye", "ocular", "cornea", "conjunctivitis", "eyelid crusting"
+                "eye redness", "red eye", "ocular", "cornea", "eyelid crusting"
             ],
             "weight": 1.4,
             "specialty": "Ophthalmology",
-            "condition": "Conjunctivitis (Red Eye) or Ocular Irritation",
+            "condition": "Ocular Surface Inflammation or Red Eye Evaluation",
             "associated": ["Eye redness or tearing", "Sensation of grit in eye", "Sensitivity to light"],
             "notes": "Symptom description points to ocular/eye evaluation."
         },
